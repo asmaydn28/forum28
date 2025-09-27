@@ -8,7 +8,7 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 const app = express();
-const port = 3000;
+//const port = 3000;
 const prisma = new PrismaClient();
 app.use(express.json());
 
@@ -298,6 +298,11 @@ app.delete('/posts/:id', authenticateToken, async (req: Request, res: Response) 
   res.send("Taksim28'e Hoşgeldiniz");
 }); */
 
+/* app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+}); */
+
+const port: number = Number(process.env.PORT) || 3000;
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
