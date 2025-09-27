@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Taksim28 - Giriş</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!DOCTYPE html>
+  <html lang="tr">
+  <head>
+    <meta charset="UTF-8">
+    <title>Taksim28 - Giriş</title>
+  </head>
+  <body>
+    <h2>Taksim28'e Hoşgeldiniz</h2>
+    <form id="loginForm">
+      <div><input type="text" id="userName" placeholder="Kullanıcı Adı" required /></div>
+      <br>
+      <div><input type="password" id="password" placeholder="Şifre" required /></div>
+      <br>
+      <div><button type="submit">Giriş Yap</button></div>
+      <br>
+      <div><button type="button" onclick="window.location.href='register.html'">Kayıt Ol</button></div>
+      <br>
+    </form>
+    <p id="message"></p>
+    <script>
+      document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const userName = document.getElementById('userName').value;
+        const password = document.getElementById('password').value;
+        const res = await fetch('/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userName, password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('accessToken', data.accessToken);
+          localStorage.setItem('refreshToken', data.refreshToken);
+          document.getElementById('message').textContent = 'Giriş başarılı!';
+          setTimeout(() => window.location.href = 'homepage.html', 1200);
+        } else {
+          document.getElementById('message').textContent = data.error || 'Giriş başarısız!';
+        }
+      });
+    </script>
+  </body>
+  </html>

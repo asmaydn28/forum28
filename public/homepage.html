@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Taksim28 - Ana Sayfa</title>
+</head>
+<body>
+  <h2 id="welcome">Yükleniyor...</h2>
+  <button id="logoutBtn">Çıkış Yap</button>
+  <script>
+    async function loadProfile() {
+      const token = localStorage.getItem('accessToken');
+      if (!token) {
+        window.location.href = '/';
+        return;
+      }
+      const res = await fetch('/homepage', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        document.getElementById('welcome').innerText = `Hoşgeldiniz! Kullanıcı ID: ${data.userId}`;
+      } else {
+        document.getElementById('welcome').innerText = 'Oturumunuz geçersiz.';
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        window.location.href = '/';
+      }
+    }
+    loadProfile();
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      const refreshToken = localStorage.getItem('refreshToken');
+      const accessToken = localStorage.getItem('accessToken');
+      await fetch('/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
+        body: JSON.stringify({ refreshToken })
+      });
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/';
+    });
+  </script>
+</body>
+</html>

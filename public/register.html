@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <title>Kayıt Ol</title>
+</head>
+<body>
+  <h2>Kayıt Ol</h2>
+  <form id="registerForm">
+    <div><input type="text" name="name" placeholder="Adınız" required /></div><br>
+    <div><input type="text" name="userName" placeholder="Kullanıcı Adı" required /></div><br>
+    <div><input type="email" name="email" placeholder="Email" required /></div><br>
+    <div><input type="password" name="password" placeholder="Şifre" required /></div><br>
+    <button type="submit">Kayıt Ol</button>
+  </form>
+  <div id="result"></div>
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form.name.value,
+        userName: form.userName.value,
+        email: form.email.value,
+        password: form.password.value
+      };
+      const res = await fetch('/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const result = await res.json();
+      document.getElementById('result').textContent = result.error ? result.error : 'Kayıt başarılı!';
+      if(!result.error) form.reset();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+import { PrismaClient } from "@prisma/client";
+import type { Request, Response } from "express";
+import express from "express";
+import * as argon2 from "argon2";
+import jwt from 'jsonwebtoken';
+import dotenv from 'dotenv';
+
+
+dotenv.config();
+
+const app = express();
+const port = 3000;
+
+const prisma = new PrismaClient();
+app.use(express.json());
+
+
+
+// middleware: token doğrulama (anasayfa koruması için)
+const authenticateToken = (req: Request, res: Response, next: Function) => {
+  const autHeader = req.headers['authorization'];
+  const token = autHeader && autHeader.split(' ')[1];
+
+  if(!token){
+    return res.status(401).json({error: "Erişim için giriş yapmalısınız."});
+  }
+
+  jwt.verify(token, process.env.FORUM28_ACCESS_TOKEN_SECRET!, (err: any, user: any) => {
+    if(err){
+      return res.status(403).json({error: "Oturum süresi doldu, lütfen tekrar giriş yapın."});
+    }
+    req.user = user;
+    next();
+  });
+}
+//access token oluşturma fonksiyonu
+function generateAccessToken(user: { id: number }):string {
+  return jwt.sign(
+    user,
+    process.env.FORUM28_ACCESS_TOKEN_SECRET!,
+    { expiresIn: process.env.ACCESS_TOKEN_EXPIRE || '15m' } 
+  );
+}
+
+//refresh token oluşturma fonksiyonu
+function generateRefreshToken(user: {id: number}): string {
+  return jwt.sign(
+    user,
+    process.env.FORUM28_REFRESH_TOKEN_SECRET!,
+    {expiresIn : process.env.REFRESH_TOKEN_EXPIRE || '7d'}
+  )
+}
+
+// kullanıcı oluşturma endpointi
+app.post("/users", async (req: Request, res: Response) => {
+  try {
+    const { email, name, userName, password } = req.body;
+
+    const hashedPassword = await argon2.hash(password);
+    const newUser = await prisma.user.create({
+      data: {
+        email,
+        name,
+        userName,
+        password: hashedPassword,
+      },
+    });
+
+    const { password: _, ...userWithoutPassword } = newUser;
+
+    res.status(201).json(userWithoutPassword);
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// login yapma endpointi
+app.post('/login', async(req: Request, res: Response) => {
+  try {
+    const {userName, password} = req.body;
+
+  //kullanıcıyı bul
+  const user = await prisma.user.findUnique({
+    where: {userName: userName},
+  });
+
+  //kullanıcı yoksa hata döndür
+  if(!user){
+    return res.status(401).json({error: 'kullanıcı bulunamadı'});
+  }
+
+  //şifreyi doğrula argon2 ile
+  const isPasswordValid = await argon2.verify(user.password, password);
+
+  //şifre yanlışsa hata döndür
+  if(!isPasswordValid){
+    return res.status(401).json({error: 'Kullanıcı adı veya şifre yanlış.'});
+  }
+
+  //token oluştur
+  const accessToken = generateAccessToken({id: user.id}); //access token oluştur
+  const refreshToken = generateRefreshToken({id: user.id}); //refresh token oluştur
+
+  //refresh token'ı veritabanına kaydet
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7); //7 gün geçerli
+
+  await prisma.token.create({
+      data: {
+      token: refreshToken,
+      type: 'REFRESH',
+      expiresAt: expiresAt,
+      userId: user.id,
+    },
+  });
+
+  //şifreyi yanıttan çıkar
+  const {password: _, ...userWithoutPassword} = user;
+
+  res.json({
+    message: "giriş başarılı",
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+    user: userWithoutPassword,
+  });
+  } catch (error: any) {
+    console.error(error);
+    if(error.code === 'P2002'){
+      return res.status(400).json({error: 'Bu kullanıcı adı veya email zaten kullanılıyor.'});
+    }
+    res.status(500).json({error: 'Internal server error'});
+  }
+});
+
+// çıkış yapma endpointi
+app.post('/logout', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const refreshToken = req.body.refreshToken;
+
+    if(!refreshToken || typeof refreshToken !== 'string'){
+      return res.status(400).json({error: "Refresh token gerekli."});
+    }
+
+    //refresh token'ı veritabanından sil
+    const deletedToken = await prisma.token.deleteMany({
+      where: {
+        token: refreshToken,
+        userId: req.user.id,
+      },
+    });
+
+    if(deletedToken.count === 0){
+      return res.status(400).json({error: "Token bulunamadı veya zaten silinmiş."});
+    }
+
+    return res.json({message: "Başarıyla çıkış yapıldı."});
+  } catch (error: any) {
+    console.error(error);
+    res.status(500).json({error: "Internal server error"});
+  }
+});
+
+// homePage(ansasayfa) endpointi
+app.get('/homepage', authenticateToken, (req: Request, res: Response) => {
+  res.json({
+    message: "Hoşgeldiniz! Ana sayfadasınız.",
+    userId: req.user.id,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+/* app.get("/", (req: Request, res: Response) => {
+  res.send("Taksim28'e Hoşgeldiniz");
+}); */
+
+app.listen(port, () => {
+  console.log(`Example app listening on port ${port}`);
+});
+
+app.use(express.static('public'));
