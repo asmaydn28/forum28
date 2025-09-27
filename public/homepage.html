@@ -1,45 +1,230 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <title>Taksim28 - Ana Sayfa</title>
-</head>
-<body>
-  <h2 id="welcome">Yükleniyor...</h2>
-  <button id="logoutBtn">Çıkış Yap</button>
-  <script>
-    async function loadProfile() {
-      const token = localStorage.getItem('accessToken');
-      if (!token) {
-        window.location.href = '/';
-        return;
+  <head>
+    <meta charset="UTF-8" />
+    <title>Forum28 - Ana Sayfa</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
       }
-      const res = await fetch('/homepage', {
-        headers: { 'Authorization': 'Bearer ' + token }
+      .post {
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+      }
+      .delete-btn {
+        background: #e74c3c;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 10px;
+        font-size: 14px;
+      }
+      .delete-btn:hover {
+        background: #c0392b;
+      }
+      form div {
+        margin-bottom: 10px;
+      }
+      label {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: bold;
+      }
+      input, textarea {
+        width: 100%;
+        padding: 8px;
+        box-sizing: border-box;
+      }
+      button[type="submit"] {
+        background: #2ecc71;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        cursor: pointer;
+      }
+      #logoutBtn {
+        background: #3498db;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        margin-bottom: 20px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 id="welcome">Yükleniyor...</h2>
+    <button id="logoutBtn">Çıkış Yap</button>
+
+    <h3>Yeni Post Oluştur</h3>
+    <form id="postForm">
+      <div>
+        <label>Başlık:</label>
+        <input type="text" id="title" required />
+      </div>
+      <div>
+        <label>Kategori:</label>
+        <input type="text" id="category" required />
+      </div>
+      <div>
+        <label>İçerik:</label>
+        <textarea id="content" rows="5" required></textarea>
+      </div>
+      <button type="submit">Post Oluştur</button>
+    </form>
+    <p id="postMessage" style="color: green; margin-top: 10px;"></p>
+
+    <div id="postsContainer">
+      <h3>Tüm Postlar</h3>
+      <div id="postsList">Yükleniyor...</div>
+    </div>
+
+    <script>
+      let currentUserId = null;
+
+      // 1. Profil yükle
+      async function loadProfile() {
+        const token = localStorage.getItem("accessToken");
+        if (!token) {
+          window.location.href = "/";
+          return;
+        }
+        const res = await fetch("/homepage", {
+          headers: { Authorization: "Bearer " + token },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          currentUserId = data.userId;
+          document.getElementById("welcome").innerText = `Hoşgeldiniz! Kullanıcı ID: ${data.userId}`;
+        } else {
+          alert("Oturumunuz geçersiz.");
+          localStorage.clear();
+          window.location.href = "/";
+        }
+      }
+
+      // 2. Post'ları yükle ve silme butonlarını ekle
+      async function loadPosts() {
+        const postsList = document.getElementById("postsList");
+        try {
+          const res = await fetch("/posts");
+          if (res.ok) {
+            const posts = await res.json();
+            postsList.innerHTML = "";
+
+            if (posts.length === 0) {
+              postsList.innerHTML = "<p>Henüz hiç post yok.</p>";
+              return;
+            }
+
+            posts.forEach(post => {
+              const postDiv = document.createElement("div");
+              postDiv.className = "post";
+
+              const deleteButton = currentUserId === post.authorId
+                ? `<button class="delete-btn" data-id="${post.id}">Sil</button>`
+                : "";
+
+              postDiv.innerHTML = `
+                <h4>${post.title}</h4>
+                <p><strong>Kategori:</strong> ${post.category}</p>
+                <p>${post.content}</p>
+                <small>
+                  Yazan: ${post.author?.name || post.author?.userName || 'Bilinmiyor'} |
+                  ${new Date(post.createdAt).toLocaleString('tr-TR')}
+                </small>
+                ${deleteButton}
+              `;
+              postsList.appendChild(postDiv);
+            });
+
+            // Silme butonlarına event ekle
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+              btn.addEventListener('click', async (e) => {
+                const postId = e.target.dataset.id;
+                if (confirm('Bu postu silmek istediğinize emin misiniz?')) {
+                  const token = localStorage.getItem('accessToken');
+                  const res = await fetch(`/posts/${postId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                  });
+                  if (res.ok) {
+                    alert('Post silindi.');
+                    loadPosts();
+                  } else {
+                    const err = await res.json();
+                    alert(err.error || 'Silme başarısız.');
+                  }
+                }
+              });
+            });
+          } else {
+            postsList.innerHTML = "<p>Postlar yüklenemedi.</p>";
+          }
+        } catch (err) {
+          postsList.innerHTML = "<p>Ağ hatası.</p>";
+        }
+      }
+
+      // 3. Çıkış yap
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        const refreshToken = localStorage.getItem("refreshToken");
+        const accessToken = localStorage.getItem("accessToken");
+        if (accessToken && refreshToken) {
+          await fetch("/logout", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer " + accessToken,
+            },
+            body: JSON.stringify({ refreshToken }),
+          });
+        }
+        localStorage.clear();
+        window.location.href = "/";
       });
-      if (res.ok) {
+
+      // 4. Post oluştur
+      document.getElementById("postForm")?.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const title = document.getElementById("title").value;
+        const category = document.getElementById("category").value;
+        const content = document.getElementById("content").value;
+        const token = localStorage.getItem("accessToken");
+
+        const res = await fetch("/posts", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer " + token,
+          },
+          body: JSON.stringify({ title, content, category }),
+        });
+
+        const messageEl = document.getElementById("postMessage");
         const data = await res.json();
-        document.getElementById('welcome').innerText = `Hoşgeldiniz! Kullanıcı ID: ${data.userId}`;
-      } else {
-        document.getElementById('welcome').innerText = 'Oturumunuz geçersiz.';
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/';
-      }
-    }
-    loadProfile();
-    document.getElementById('logoutBtn').addEventListener('click', async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      const accessToken = localStorage.getItem('accessToken');
-      await fetch('/logout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + accessToken },
-        body: JSON.stringify({ refreshToken })
+
+        if (res.ok) {
+          messageEl.innerText = "Post başarıyla oluşturuldu!";
+          messageEl.style.color = "green";
+          document.getElementById("postForm").reset();
+          loadPosts();
+        } else {
+          messageEl.innerText = data.error || "Post oluşturulamadı.";
+          messageEl.style.color = "red";
+        }
       });
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('refreshToken');
-      window.location.href = '/';
-    });
-  </script>
-</body>
+
+      // 5. Başlat
+      loadProfile();
+      loadPosts();
+    </script>
+  </body>
 </html>

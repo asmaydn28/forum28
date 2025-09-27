@@ -5,16 +5,11 @@ import * as argon2 from "argon2";
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 
-
 dotenv.config();
-
 const app = express();
 const port = 3000;
-
 const prisma = new PrismaClient();
 app.use(express.json());
-
-
 
 // middleware: token doğrulama (anasayfa koruması için)
 const authenticateToken = (req: Request, res: Response, next: Function) => {
@@ -169,6 +164,92 @@ app.get('/homepage', authenticateToken, (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// Post oluşturma endpointi
+app.post('/posts',authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const { title,content,category} = req.body;
+    const userId = req.user.id;
+
+    if(!title || !content || !category){
+      return res.status(400).json({error: "Başlık, içerik ve kategori gerekli."});
+    }
+
+    const newPosts = await prisma.post.create({
+      data: {
+        title,
+        content,
+        category,
+        authorId: userId,
+      },
+    });
+
+    res.status(201).json({
+      messsage: "Post başarıyla oluşturuldu.",
+      post: newPosts,
+    });
+
+  } catch (error) {
+    console.error('Post oluşturma hatası:', error);
+    res.status(500).json({ error: 'Post oluşturulamadı.' });
+  }
+});
+
+// postları ekrana getirme endpointi
+app.get('/posts', async (req: Request, res: Response) => {
+  try {
+
+    const posts = await prisma.post.findMany({
+      include: {
+        author: {
+          select: { name: true, userName: true}
+        }
+      },
+      orderBy: { createdAt: 'desc'}
+    });
+
+    res.json(posts);
+  } catch (error) {
+    console.error('Post listeleme hatası:', error);
+    res.status(500).json({ error: 'Postlar yüklenemedi.' });
+  }
+})
+
+// post silme endpointi(postu oluşturan siler)
+app.delete('/posts/:id', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const postId = parseInt(req.params.id, 10);
+    const userId = req.user.id;
+
+    if(isNaN(postId)){
+      return res.status(400).json({error: "Geçersiz post ID."});
+    }
+
+    // Önce post'u bul ve sahibini kontrol et
+    const posts = await prisma.post.findUnique({
+      where: {id: postId},
+    });
+
+    if(!posts){
+      return res.status(404).json({error: "Post bulunamadı."});
+    }
+
+    // Sahip kontrolü: post.authorId === userId ?
+    if(posts.authorId !== userId){
+      return res.status(403).json({error: "Bu postu silme yetkiniz yok."});
+    }
+
+    //sil
+    await prisma.post.delete({
+      where: { id: postId},
+    });
+
+    res.json({message: "Post başarıyla silindi."});
+  } catch (error) {
+    console.error("post silme hatası: ", error);
+    res.status(500).json({error: "Post silinemedi."});
+  }
+})
 
 /* app.get("/", (req: Request, res: Response) => {
   res.send("Taksim28'e Hoşgeldiniz");

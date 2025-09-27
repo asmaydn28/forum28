@@ -23,6 +23,7 @@ model User {
   createdAt DateTime @default(now())
 
   tokens Token[]
+  posts  Post[]
 }
 
 model Token {
@@ -37,4 +38,16 @@ model Token {
 
 enum TokenType {
   REFRESH
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  title String
+  content String
+  category String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId Int
+  author    User     @relation(fields: [authorId], references: [id], onDelete:Cascade)
 }
