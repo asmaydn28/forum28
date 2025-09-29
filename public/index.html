@@ -108,6 +108,8 @@
       if (res.ok) {
         localStorage.setItem('accessToken', data.accessToken);
         localStorage.setItem('refreshToken', data.refreshToken);
+        localStorage.setItem('userId', data.user.id);
+        localStorage.setItem('userName', data.user.userName);
         messageEl.textContent = 'Giriş başarılı!';
         messageEl.className = 'success';
         setTimeout(() => window.location.href = 'homepage.html', 1200);

@@ -45,9 +45,21 @@ export const getAllPosts = async (req: Request, res: Response) => {
             include: {
                 author: {
                     select: { name: true, userName: true }
+                },
+                comments: { // Yorumları ve yazar bilgilerini dahil et
+                    select: { 
+                        id: true, 
+                        content: true, 
+                        createdAt: true, 
+                        authorId: true,
+                        author: { 
+                            select: { name: true, userName: true } 
+                        }
+                    },
+                    orderBy: { createdAt: 'asc' } 
                 }
             },
-            orderBy: { createdAt: 'desc' }
+            orderBy: { createdAt: 'desc' } 
         });
 
         res.json(posts);

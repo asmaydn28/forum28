@@ -1,230 +1,288 @@
 <!DOCTYPE html>
 <html lang="tr">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Forum28 - Ana Sayfa</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ana Sayfa - Forum28</title>
     <style>
-      body {
-        font-family: Arial, sans-serif;
-        max-width: 800px;
-        margin: 0 auto;
-        padding: 20px;
-      }
-      .post {
-        border: 1px solid #ddd;
-        padding: 15px;
-        margin-bottom: 15px;
-        border-radius: 5px;
-      }
-      .delete-btn {
-        background: #e74c3c;
-        color: white;
-        border: none;
-        padding: 6px 12px;
-        border-radius: 4px;
-        cursor: pointer;
-        margin-top: 10px;
-        font-size: 14px;
-      }
-      .delete-btn:hover {
-        background: #c0392b;
-      }
-      form div {
-        margin-bottom: 10px;
-      }
-      label {
-        display: block;
-        margin-bottom: 4px;
-        font-weight: bold;
-      }
-      input, textarea {
-        width: 100%;
-        padding: 8px;
-        box-sizing: border-box;
-      }
-      button[type="submit"] {
-        background: #2ecc71;
-        color: white;
-        border: none;
-        padding: 10px 20px;
-        cursor: pointer;
-      }
-      #logoutBtn {
-        background: #3498db;
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        margin-bottom: 20px;
-        cursor: pointer;
-      }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; background-color: #f0f2f5; color: #1c1e21; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1, h2 { color: #0056b3; }
+        .post { position: relative; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+        .post-header { font-weight: bold; font-size: 1.2em; }
+        .post-meta { font-size: 0.9em; color: #606770; margin-bottom: 5px; }
+        .post-category { background-color: #e7f3ff; color: #0056b3; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; display: inline-block; }
+        .post-content { margin-top: 10px; }
+        .comments-section { margin-top: 15px; padding-top: 10px; border-top: 1px solid #e9ebee; }
+        .comment { background-color: #f0f2f5; padding: 8px 12px; border-radius: 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .comment-author { font-weight: bold; font-size: 0.9em; }
+        .comment-content { font-size: 0.95em; }
+        .comment-form { display: flex; margin-top: 10px; }
+        .comment-input { flex-grow: 1; border: 1px solid #ccd0d5; border-radius: 18px; padding: 8px 12px; }
+        .comment-button { border: none; background-color: #0056b3; color: white; border-radius: 18px; padding: 8px 15px; margin-left: 8px; cursor: pointer; }
+        .delete-btn { background-color: #fa3e3e; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; font-size: 14px; line-height: 24px; text-align: center; }
+        .delete-post-btn { position: absolute; top: 10px; right: 10px; }
+        #logout-button { background-color: #dc3545; color: white; padding: 10px 15px; border: none; border-radius: 5px; cursor: pointer; float: right; }
+        #post-creation-form { margin-bottom: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px; }
+        #post-creation-form input, #post-creation-form textarea, #post-creation-form select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        #post-creation-form button { background-color: #28a745; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
     </style>
-  </head>
-  <body>
-    <h2 id="welcome">Yükleniyor...</h2>
-    <button id="logoutBtn">Çıkış Yap</button>
+</head>
+<body>
 
-    <h3>Yeni Post Oluştur</h3>
-    <form id="postForm">
-      <div>
-        <label>Başlık:</label>
-        <input type="text" id="title" required />
-      </div>
-      <div>
-        <label>Kategori:</label>
-        <input type="text" id="category" required />
-      </div>
-      <div>
-        <label>İçerik:</label>
-        <textarea id="content" rows="5" required></textarea>
-      </div>
-      <button type="submit">Post Oluştur</button>
-    </form>
-    <p id="postMessage" style="color: green; margin-top: 10px;"></p>
+    <div class="container">
+        <button id="logout-button">Çıkış Yap</button>
+        <h1>Forum28 Ana Sayfa</h1>
+        <p id="welcome-message">Hoş geldiniz!</p>
+        <hr>
 
-    <div id="postsContainer">
-      <h3>Tüm Postlar</h3>
-      <div id="postsList">Yükleniyor...</div>
+        <div id="post-creation-form">
+            <h2>Yeni Gönderi Oluştur</h2>
+            <form id="new-post-form">
+                <input type="text" id="post-title" placeholder="Gönderi Başlığı" required>
+                <textarea id="post-content" rows="4" placeholder="Ne düşünüyorsun?" required></textarea>
+                <select id="post-category" required>
+                    <option value="" disabled selected>Kategori Seçin</option>
+                    <option value="Genel">Genel</option>
+                    <option value="Teknoloji">Teknoloji</option>
+                    <option value="Spor">Spor</option>
+                    <option value="Eğlence">Eğlence</option>
+                    <option value="Eğitim">Eğitim</option>
+                </select>
+                <button type="submit">Gönder</button>
+            </form>
+        </div>
+
+        <hr> <br>
+        <div>Tüm Postlar</div> <br>
+        <div id="posts-container">
+            <p>Gönderiler yükleniyor...</p>
+        </div>
     </div>
 
     <script>
-      let currentUserId = null;
+        document.addEventListener('DOMContentLoaded', () => {
+            const postsContainer = document.getElementById('posts-container');
+            const logoutButton = document.getElementById('logout-button');
+            const newPostForm = document.getElementById('new-post-form');
+            const welcomeMessage = document.getElementById('welcome-message');
 
-      // 1. Profil yükle
-      async function loadProfile() {
-        const token = localStorage.getItem("accessToken");
-        if (!token) {
-          window.location.href = "/";
-          return;
-        }
-        const res = await fetch("/homepage", {
-          headers: { Authorization: "Bearer " + token },
-        });
-        if (res.ok) {
-          const data = await res.json();
-          currentUserId = data.userId;
-          document.getElementById("welcome").innerText = `Hoşgeldiniz! Kullanıcı ID: ${data.userId}`;
-        } else {
-          alert("Oturumunuz geçersiz.");
-          localStorage.clear();
-          window.location.href = "/";
-        }
-      }
+            const token = localStorage.getItem('accessToken');
+            const refreshToken = localStorage.getItem('refreshToken');
+            const userId = localStorage.getItem('userId');
+            const userName = localStorage.getItem('userName');
 
-      // 2. Post'ları yükle ve silme butonlarını ekle
-      async function loadPosts() {
-        const postsList = document.getElementById("postsList");
-        try {
-          const res = await fetch("/posts");
-          if (res.ok) {
-            const posts = await res.json();
-            postsList.innerHTML = "";
-
-            if (posts.length === 0) {
-              postsList.innerHTML = "<p>Henüz hiç post yok.</p>";
-              return;
+            if (!token || !userId) {
+                window.location.href = '/index.html';
+                return;
             }
+            
+            const currentUserId = parseInt(userId, 10);
+            welcomeMessage.textContent = `Hoş geldin, ${userName || 'kullanıcı'}! Burası gönderilerin listelendiği ana sayfa.`;
 
-            posts.forEach(post => {
-              const postDiv = document.createElement("div");
-              postDiv.className = "post";
+            const fetchAndRenderPosts = async () => {
+                try {
+                    const response = await fetch('/posts', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-              const deleteButton = currentUserId === post.authorId
-                ? `<button class="delete-btn" data-id="${post.id}">Sil</button>`
-                : "";
+                    if (!response.ok) {
+                        if (response.status === 401 || response.status === 403) {
+                             alert('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
+                             handleLogout(true); // force logout
+                        }
+                        throw new Error('Gönderiler alınamadı.');
+                    }
 
-              postDiv.innerHTML = `
-                <h4>${post.title}</h4>
-                <p><strong>Kategori:</strong> ${post.category}</p>
-                <p>${post.content}</p>
-                <small>
-                  Yazan: ${post.author?.name || post.author?.userName || 'Bilinmiyor'} |
-                  ${new Date(post.createdAt).toLocaleString('tr-TR')}
-                </small>
-                ${deleteButton}
-              `;
-              postsList.appendChild(postDiv);
-            });
+                    const posts = await response.json();
+                    postsContainer.innerHTML = ''; 
 
-            // Silme butonlarına event ekle
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-              btn.addEventListener('click', async (e) => {
-                const postId = e.target.dataset.id;
-                if (confirm('Bu postu silmek istediğinize emin misiniz?')) {
-                  const token = localStorage.getItem('accessToken');
-                  const res = await fetch(`/posts/${postId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': 'Bearer ' + token }
-                  });
-                  if (res.ok) {
-                    alert('Post silindi.');
-                    loadPosts();
-                  } else {
-                    const err = await res.json();
-                    alert(err.error || 'Silme başarısız.');
-                  }
+                    posts.forEach(post => {
+                        const postElement = document.createElement('div');
+                        postElement.className = 'post';
+                        postElement.dataset.postId = post.id;
+
+                        let commentsHTML = '<div class="comments-section"><h3>Yorumlar</h3>';
+                        if (post.comments && post.comments.length > 0) {
+                            post.comments.forEach(comment => {
+                                const isCommentAuthor = comment.authorId === currentUserId;
+                                commentsHTML += `
+                                    <div class="comment" data-comment-id="${comment.id}">
+                                        <div>
+                                            <span class="comment-author">${comment.author.userName || 'Bilinmeyen Yazar'}</span>
+                                            <div class="comment-content">${comment.content}</div>
+                                        </div>
+                                        ${isCommentAuthor ? `<button class="delete-btn delete-comment-btn" title="Yorumu sil">×</button>` : ''}
+                                    </div>
+                                `;
+                            });
+                        } else {
+                            commentsHTML += '<p>Henüz yorum yok.</p>';
+                        }
+                        commentsHTML += '</div>';
+
+                        const isPostAuthor = post.authorId === currentUserId;
+
+                        postElement.innerHTML = `
+                            ${isPostAuthor ? `<button class="delete-btn delete-post-btn" title="Gönderiyi sil">×</button>` : ''}
+                            <div class="post-header">${post.title}</div>
+                            <div class="post-meta">
+                                <span class="post-author">Yazar: ${post.author.userName || 'Bilinmeyen'}</span> | 
+                                <span class="post-category">${post.category}</span>
+                            </div>
+                            <div class="post-content">${post.content}</div>
+                            ${commentsHTML}
+                            <div class="comment-form">
+                                <input type="text" class="comment-input" placeholder="Yorum ekle...">
+                                <button class="comment-button">Gönder</button>
+                            </div>
+                        `;
+                        postsContainer.appendChild(postElement);
+                    });
+
+                } catch (error) {
+                    console.error('Hata:', error);
+                    postsContainer.innerHTML = '<p style="color: red;">Gönderiler yüklenirken bir hata oluştu.</p>';
                 }
-              });
-            });
-          } else {
-            postsList.innerHTML = "<p>Postlar yüklenemedi.</p>";
-          }
-        } catch (err) {
-          postsList.innerHTML = "<p>Ağ hatası.</p>";
-        }
-      }
+            };
 
-      // 3. Çıkış yap
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        const refreshToken = localStorage.getItem("refreshToken");
-        const accessToken = localStorage.getItem("accessToken");
-        if (accessToken && refreshToken) {
-          await fetch("/logout", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: "Bearer " + accessToken,
-            },
-            body: JSON.stringify({ refreshToken }),
-          });
-        }
-        localStorage.clear();
-        window.location.href = "/";
-      });
+            const handleContainerClick = async (event) => {
+                const target = event.target;
 
-      // 4. Post oluştur
-      document.getElementById("postForm")?.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const title = document.getElementById("title").value;
-        const category = document.getElementById("category").value;
-        const content = document.getElementById("content").value;
-        const token = localStorage.getItem("accessToken");
+                if (target.classList.contains('comment-button')) {
+                    handleCommentSubmit(target);
+                } else if (target.classList.contains('delete-comment-btn')) {
+                    handleDeleteComment(target);
+                } else if (target.classList.contains('delete-post-btn')) {
+                    handleDeletePost(target);
+                }
+            };
 
-        const res = await fetch("/posts", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer " + token,
-          },
-          body: JSON.stringify({ title, content, category }),
+            const handleCommentSubmit = async (button) => {
+                const postElement = button.closest('.post');
+                const postId = postElement.dataset.postId;
+                const input = button.previousElementSibling;
+                const content = input.value.trim();
+
+                if (!content) {
+                    alert('Yorum içeriği boş olamaz.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/posts/${postId}/comments`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ content: content })
+                    });
+
+                    if (!response.ok) throw new Error((await response.json()).error || 'Yorum gönderilemedi.');
+                    input.value = '';
+                    fetchAndRenderPosts();
+                } catch (error) {
+                    alert(`Bir hata oluştu: ${error.message}`);
+                }
+            };
+
+            const handleDeleteComment = async (button) => {
+                if (!confirm('Bu yorumu silmek istediğinizden emin misiniz?')) return;
+
+                const commentElement = button.closest('.comment');
+                const postElement = button.closest('.post');
+                const postId = postElement.dataset.postId;
+                const commentId = commentElement.dataset.commentId;
+
+                try {
+                    const response = await fetch(`/posts/${postId}/comments/${commentId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (!response.ok) throw new Error((await response.json()).error || 'Yorum silinemedi.');
+                    fetchAndRenderPosts();
+                } catch (error) {
+                    alert(`Bir hata oluştu: ${error.message}`);
+                }
+            };
+
+            const handleDeletePost = async (button) => {
+                if (!confirm('Bu gönderiyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.')) return;
+
+                const postElement = button.closest('.post');
+                const postId = postElement.dataset.postId;
+
+                try {
+                    const response = await fetch(`/posts/${postId}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (!response.ok) throw new Error((await response.json()).error || 'Gönderi silinemedi.');
+                    fetchAndRenderPosts();
+                } catch (error) {
+                    alert(`Bir hata oluştu: ${error.message}`);
+                }
+            };
+            
+            const handlePostSubmit = async (event) => {
+                event.preventDefault();
+                const title = document.getElementById('post-title').value.trim();
+                const content = document.getElementById('post-content').value.trim();
+                const category = document.getElementById('post-category').value;
+
+                if (!title || !content || !category) {
+                    alert('Başlık, içerik ve kategori alanları boş olamaz.');
+                    return;
+                }
+
+                try {
+                    const response = await fetch('/posts', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ title, content, category })
+                    });
+
+                    if (!response.ok) throw new Error((await response.json()).error || 'Gönderi oluşturulamadı.');
+                    
+                    newPostForm.reset();
+                    fetchAndRenderPosts();
+                } catch (error) {
+                    alert(`Bir hata oluştu: ${error.message}`);
+                }
+            };
+
+            const handleLogout = async (force = false) => {
+                if (!force && refreshToken) {
+                    try {
+                        await fetch('/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ refreshToken: refreshToken })
+                        });
+                    } catch (error) {
+                        console.error('Çıkış sunucu hatası (yoksayılıyor):', error);
+                    }
+                }
+                localStorage.clear();
+                window.location.href = '/index.html';
+            };
+
+            postsContainer.addEventListener('click', handleContainerClick);
+            logoutButton.addEventListener('click', () => handleLogout(false));
+            newPostForm.addEventListener('submit', handlePostSubmit);
+            
+            fetchAndRenderPosts();
         });
-
-        const messageEl = document.getElementById("postMessage");
-        const data = await res.json();
-
-        if (res.ok) {
-          messageEl.innerText = "Post başarıyla oluşturuldu!";
-          messageEl.style.color = "green";
-          document.getElementById("postForm").reset();
-          loadPosts();
-        } else {
-          messageEl.innerText = data.error || "Post oluşturulamadı.";
-          messageEl.style.color = "red";
-        }
-      });
-
-      // 5. Başlat
-      loadProfile();
-      loadPosts();
     </script>
-  </body>
+
+</body>
 </html>
