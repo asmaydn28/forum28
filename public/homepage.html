@@ -10,9 +10,12 @@
         h1, h2 { color: #0056b3; }
         .post { position: relative; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 8px; }
         .post-header { font-weight: bold; font-size: 1.2em; }
-        .post-meta { font-size: 0.9em; color: #606770; margin-bottom: 5px; }
+        .post-meta { font-size: 0.9em; color: #606770; margin-bottom: 10px; }
         .post-category { background-color: #e7f3ff; color: #0056b3; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; display: inline-block; }
         .post-content { margin-top: 10px; }
+        .tags-container { margin-top: 10px; }
+        .post-tag { background-color: #e0e0e0; color: #333; padding: 3px 8px; border-radius: 10px; font-size: 0.8em; display: inline-block; margin-right: 5px; margin-bottom: 5px; text-decoration: none; }
+        .post-tag:hover { background-color: #ccc; }
         .comments-section { margin-top: 15px; padding-top: 10px; border-top: 1px solid #e9ebee; }
         .comment { background-color: #f0f2f5; padding: 8px 12px; border-radius: 18px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .comment-author { font-weight: bold; font-size: 0.9em; }
@@ -26,6 +29,10 @@
         #post-creation-form { margin-bottom: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px; }
         #post-creation-form input, #post-creation-form textarea, #post-creation-form select { width: 100%; padding: 10px; margin-bottom: 10px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
         #post-creation-form button { background-color: #28a745; color: white; padding: 12px; border: none; border-radius: 5px; cursor: pointer; width: 100%; }
+        /* YENİ: Post başlığı ve geri dön linki için stil */
+        .posts-section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        #posts-section-title { margin: 0; }
+        #show-all-posts-link { font-size: 0.9em; text-decoration: none; color: #0056b3; }
     </style>
 </head>
 <body>
@@ -49,12 +56,17 @@
                     <option value="Eğlence">Eğlence</option>
                     <option value="Eğitim">Eğitim</option>
                 </select>
+                <input type="text" id="post-tags" placeholder="Etiketler (virgülle ayırın, örn: teknoloji, yazılım, ...)">
                 <button type="submit">Gönder</button>
             </form>
         </div>
 
-        <hr> <br>
-        <div>Tüm Postlar</div> <br>
+        <hr>
+        <!-- YENİ: Dinamik başlık ve geri dön linki alanı -->
+        <div class="posts-section-header">
+            <h2 id="posts-section-title">Tüm Postlar</h2>
+            <a href="#" id="show-all-posts-link" style="display: none;">&larr; Tüm Postlara Geri Dön</a>
+        </div>
         <div id="posts-container">
             <p>Gönderiler yükleniyor...</p>
         </div>
@@ -66,6 +78,9 @@
             const logoutButton = document.getElementById('logout-button');
             const newPostForm = document.getElementById('new-post-form');
             const welcomeMessage = document.getElementById('welcome-message');
+            // YENİ: Başlık ve link elementleri
+            const postsSectionTitle = document.getElementById('posts-section-title');
+            const showAllPostsLink = document.getElementById('show-all-posts-link');
 
             const token = localStorage.getItem('accessToken');
             const refreshToken = localStorage.getItem('refreshToken');
@@ -80,22 +95,37 @@
             const currentUserId = parseInt(userId, 10);
             welcomeMessage.textContent = `Hoş geldin, ${userName || 'kullanıcı'}! Burası gönderilerin listelendiği ana sayfa.`;
 
-            const fetchAndRenderPosts = async () => {
+            const fetchAndRenderPosts = async (tag = null) => {
+                // YENİ: Başlığı ve geri dön linkini yönet
+                if (tag) {
+                    postsSectionTitle.textContent = `"${tag}" Etiketli Postlar`;
+                    showAllPostsLink.style.display = 'inline';
+                } else {
+                    postsSectionTitle.textContent = 'Tüm Postlar';
+                    showAllPostsLink.style.display = 'none';
+                }
+
                 try {
-                    const response = await fetch('/posts', {
+                    const url = tag ? `/posts/tag/${tag}` : '/posts';
+                    const response = await fetch(url, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
 
                     if (!response.ok) {
                         if (response.status === 401 || response.status === 403) {
                              alert('Oturum süresi doldu. Lütfen tekrar giriş yapın.');
-                             handleLogout(true); // force logout
+                             handleLogout(true);
                         }
                         throw new Error('Gönderiler alınamadı.');
                     }
 
                     const posts = await response.json();
                     postsContainer.innerHTML = ''; 
+
+                    if (posts.length === 0) {
+                        postsContainer.innerHTML = '<p>Gösterilecek gönderi bulunamadı.</p>';
+                        return;
+                    }
 
                     posts.forEach(post => {
                         const postElement = document.createElement('div');
@@ -121,6 +151,14 @@
                         }
                         commentsHTML += '</div>';
 
+                        let tagsHTML = '';
+                        if (post.tags && post.tags.length > 0) {
+                            const tagLinks = post.tags.map(tag => 
+                                `<a href="#" class="post-tag" data-tag-name="${tag}">${tag}</a>`
+                            ).join('');
+                            tagsHTML = `<div class="tags-container">${tagLinks}</div>`;
+                        }
+
                         const isPostAuthor = post.authorId === currentUserId;
 
                         postElement.innerHTML = `
@@ -131,6 +169,7 @@
                                 <span class="post-category">${post.category}</span>
                             </div>
                             <div class="post-content">${post.content}</div>
+                            ${tagsHTML}
                             ${commentsHTML}
                             <div class="comment-form">
                                 <input type="text" class="comment-input" placeholder="Yorum ekle...">
@@ -155,6 +194,10 @@
                     handleDeleteComment(target);
                 } else if (target.classList.contains('delete-post-btn')) {
                     handleDeletePost(target);
+                } else if (target.classList.contains('post-tag')) {
+                    event.preventDefault();
+                    const tagName = target.dataset.tagName;
+                    fetchAndRenderPosts(tagName);
                 }
             };
 
@@ -232,6 +275,8 @@
                 const title = document.getElementById('post-title').value.trim();
                 const content = document.getElementById('post-content').value.trim();
                 const category = document.getElementById('post-category').value;
+                const tagsValue = document.getElementById('post-tags').value.trim();
+                const tags = tagsValue ? tagsValue.split(',').map(t => t.trim()).filter(t => t.length > 0) : [];
 
                 if (!title || !content || !category) {
                     alert('Başlık, içerik ve kategori alanları boş olamaz.');
@@ -245,7 +290,7 @@
                             'Content-Type': 'application/json',
                             'Authorization': `Bearer ${token}`
                         },
-                        body: JSON.stringify({ title, content, category })
+                        body: JSON.stringify({ title, content, category, tags })
                     });
 
                     if (!response.ok) throw new Error((await response.json()).error || 'Gönderi oluşturulamadı.');
@@ -275,6 +320,12 @@
                 localStorage.clear();
                 window.location.href = '/index.html';
             };
+
+            // YENİ: Geri dön linki için olay dinleyici
+            showAllPostsLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                fetchAndRenderPosts(null);
+            });
 
             postsContainer.addEventListener('click', handleContainerClick);
             logoutButton.addEventListener('click', () => handleLogout(false));
