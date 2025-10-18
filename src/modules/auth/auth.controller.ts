@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { loginService } from "./auth.service";
 
+// login(giris) controller endpoint
 export const loginController = async (req: Request, res: Response) => {
     try {
         // 1. eposta ve sifreyi body den al
@@ -27,4 +28,9 @@ export const loginController = async (req: Request, res: Response) => {
         console.error("Giris hatası:", error);
         res.status(500).json({ message: "Giris yapılırken bir hata oluştu." });
     }
+}
+
+// logout(cıkıs) controller enpointi
+export const logoutController = async (req: Request, res: Response) => {
+    res.status(200).json({message: "Çıkış basarılı"});
 }
