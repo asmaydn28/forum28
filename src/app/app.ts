@@ -1,16 +1,17 @@
 import express from 'express';
 import { PrismaClient } from '@prisma/client';
 import userRoutes from '../modules/user/user.routes';
+import authRoutes from '../modules/auth/auth.routes';
 
 const app = express();
 export const prisma = new PrismaClient();
 
 // Middleware'ler
-app.use(express.json()); // Gelen isteklerin body'sini JSON olarak parse eder
+app.use(express.json());
 
 // Ana Route'lar
 app.use('/api/users', userRoutes);
-// app.use('/api/posts', postRoutes); // Gelecekte eklenecek
+app.use('/api/auth', authRoutes);
 
 // Basit bir ana sayfa route'u
 app.get('/', (req, res) => {
