@@ -20,3 +20,9 @@ export const createPostService = async (data: PostCreateData): Promise<Post> => 
     });
     return newPost;
 }
+
+// Post listeleme servisi
+export const getAllPostService = async (): Promise<Post[]> => {
+    const posts = await prisma.post.findMany();
+    return posts;
+}

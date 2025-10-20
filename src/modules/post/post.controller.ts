@@ -1,6 +1,7 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import { AuthRequest } from "src/middlewares/auth.middleware";
-import { createPostService } from "./post.service";
+import { createPostService, getAllPostService } from "./post.service";
+import { get } from "http";
 
 // yeni post oluşturma controller'ı
 export const createPostController = async (req: AuthRequest, res: Response) => {
@@ -27,5 +28,17 @@ export const createPostController = async (req: AuthRequest, res: Response) => {
     } catch (error) {
         console.error("Post olusturma hatası:", error);
         res.status(500).json({ message: "Post olusturulurken bir hata olustu." });
+    }
+}
+
+// Post listeleme controllerı
+export const gettAllPostController = async (req: Request, res: Response) => {
+    try {
+        // tüm postları servisden al
+        const posts = await getAllPostService();
+        res.status(200).json({posts});
+    } catch (error) {
+        console.error("Post listeleme hatası:", error);
+        res.status(500).json({ message: "Postlar alınırken bir hata oluştu." });
     }
 }
