@@ -23,6 +23,34 @@ export const createPostService = async (data: PostCreateData): Promise<Post> => 
 
 // Post listeleme servisi
 export const getAllPostService = async (): Promise<Post[]> => {
-    const posts = await prisma.post.findMany();
+    const posts = await prisma.post.findMany({
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            }
+        }
+    });
     return posts;
+}
+
+// id'ye göre post getirme servisi
+export const getPostByIdService = async (id: number): Promise<Post | null> => {
+    // 1. findUnique kullanarak postu al
+    const post = await prisma.post.findUnique({
+        where: {
+            id: id,
+        },
+        include: {
+            author: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            }
+        }
+    });
+    return post;
 }

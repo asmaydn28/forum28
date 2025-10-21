@@ -1,6 +1,6 @@
 import { Response, Request } from "express";
 import { AuthRequest } from "src/middlewares/auth.middleware";
-import { createPostService, getAllPostService } from "./post.service";
+import { createPostService, getAllPostService, getPostByIdService } from "./post.service";
 import { get } from "http";
 
 // yeni post oluşturma controller'ı
@@ -40,5 +40,33 @@ export const gettAllPostController = async (req: Request, res: Response) => {
     } catch (error) {
         console.error("Post listeleme hatası:", error);
         res.status(500).json({ message: "Postlar alınırken bir hata oluştu." });
+    }
+}
+
+// id'ye göre post getirme controller'ı
+export const getPostByIdController = async (req: Request, res: Response) => {
+    try {
+        // 1. URL parametresinden id'yi al
+        const { id } = req.params;   
+
+        // 2. Servisi çağır
+        const postId = parseInt(id, 10);
+
+        // gelen id geçerli mi kontrol et
+        if(isNaN(postId)){
+            return res.status(400).json({ message: "Geçersiz post ID'si." });
+        }
+
+        const post = await getPostByIdService(postId);
+
+        // 3. servisten dönen sonuca göre yanıt ver
+        if (!post) {
+            return res.status(404).json({ message: "Post bulunamadı." });
+        }
+        
+        res.status(200).json({ post });
+    } catch (error) {
+        console.error(" ID'ye göre Post getirme hatası:", error);
+        res.status(500).json({ message: "Post alınırken bir hata oluştu." });
     }
 }

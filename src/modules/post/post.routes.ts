@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { authMiddleware } from "../../middlewares/auth.middleware";
-import { createPostController, gettAllPostController } from "./post.controller";
+import { createPostController, gettAllPostController, getPostByIdController } from "./post.controller";
 
 const postRouter = Router();
 
@@ -9,5 +9,8 @@ postRouter.post('/', authMiddleware, createPostController);
 
 // post listeleme route'u
 postRouter.get('/', gettAllPostController);
+
+// id'ye göre post getirme route'u
+postRouter.get('/:id', getPostByIdController);
 
 export default postRouter;
