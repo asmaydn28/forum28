@@ -1,7 +1,9 @@
 import { Response, Request } from "express";
 import { AuthRequest } from "src/middlewares/auth.middleware";
 import { createPostService, getAllPostService, getPostByIdService } from "./post.service";
-import { get } from "http";
+import * as postService from './post.service';
+
+//import { get } from "http";
 
 // yeni post oluşturma controller'ı
 export const createPostController = async (req: AuthRequest, res: Response) => {
@@ -68,5 +70,38 @@ export const getPostByIdController = async (req: Request, res: Response) => {
     } catch (error) {
         console.error(" ID'ye göre Post getirme hatası:", error);
         res.status(500).json({ message: "Post alınırken bir hata oluştu." });
+    }
+}
+
+// post güncelleme controller'ı
+export const updatePostController = async (req:Request, res:Response) => {
+    try {
+        // 1. url den post id al
+        const {postId} = req.params;
+
+        // 2. request body den güncellenecek alanları al
+        const postDataToUpdate = req.body;
+
+        // 3. middleware den user id al
+        // @ts-ignore
+        const userId = req.user.id;
+
+        // 4. bilgileri service e gönder
+        const updatedPost = await postService.updatedPost(
+            postId,
+            postDataToUpdate,
+            userId
+        );
+
+        // 5. başarılı yanıt
+        res.status(200).json({
+            message: "Post başarıyla güncellendi",
+            post: updatedPost
+        });
+    } catch (error:any) {
+        if (error.message === "Gönderi bulunamadı." || error.message === "Bu gönderiyi güncelleme yetkiniz yok.") {
+            return res.status(403).json({ message: error.message });
+        }
+        res.status(500).json({ message: "Post güncellenirken bir hata oluştu." });
     }
 }
