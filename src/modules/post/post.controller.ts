@@ -2,7 +2,6 @@ import { Response, Request } from "express";
 import { AuthRequest } from "src/middlewares/auth.middleware";
 import { createPostService, getAllPostService, getPostByIdService } from "./post.service";
 import * as postService from './post.service';
-
 //import { get } from "http";
 
 // yeni post oluşturma controller'ı
@@ -103,5 +102,30 @@ export const updatePostController = async (req:Request, res:Response) => {
             return res.status(403).json({ message: error.message });
         }
         res.status(500).json({ message: "Post güncellenirken bir hata oluştu." });
+    }
+}
+
+// post silme controller'ı
+export const deletePostController = async (req:Request, res:Response)=> {
+    try {
+        // 1. url den post id al
+        const {postId} = req.params;
+        
+        // 2. middleware den user id al
+        // @ts-ignore
+        const userId = req.user.id;
+
+        // 3. bilgileri service e gönder
+        await postService.deletePostService(postId, userId);
+
+        // 4. başarılı yanıt
+        res.status(200).json({
+            message: "Post basarıyla silindi"
+        });
+    } catch (error:any) {
+        if (error.message === "Gönderi bulunamadı." || error.message === "Bu gönderiyi silme yetkiniz yok.") {
+            return res.status(403).json({ message: error.message });
+        }
+        res.status(500).json({ message: "Post silinirken bir hata oluştu." });
     }
 }

@@ -96,3 +96,38 @@ export const updatedPost = async (
 
     return updatedPost;
 }
+
+// post silme servisi
+export const deletePostService = async (postId:string, userId:string) => {
+    // gelen id leri sayıya çevir
+    const numericPostId = parseInt(postId, 10);
+    const numericUserId = parseInt(userId, 10);
+
+    // id ler geçerli mi kontrol et
+    if (isNaN(numericPostId) || isNaN(numericUserId)) {
+        throw new Error("Geçersiz ID formatı.");
+    }
+
+    // gönderi mevcutmu ? kontrol et
+    const post = await prisma.post.findUnique({
+        where: {
+            id: numericPostId,
+        },
+    });
+
+    if (!post) {
+        throw new Error("Gönderi bulunamadı.");
+    }
+
+    // gönderi sahibi mi ? kontrol et
+    if (post.authorId !== numericUserId) {
+        throw new Error("Bu gönderiyi silme yetkiniz yok.");
+    }
+
+    // gönderiyi sil
+    await prisma.post.delete({
+        where: {
+            id: numericPostId,
+        },
+    });
+}
