@@ -18,7 +18,7 @@ Bu proje, **Node.js, TypeScript ve modern web teknolojilerini** öğrenmek için
 
 ```bash
 # Projeyi klonla
-git clone <repository-url>
+git clone https://github.com/asmaydn28/forum28
 cd forum28
 
 # Bağımlılıkları yükle
